@@ -125,7 +125,7 @@ def generateMultipleAgents(num):
     agents = []
     agentSpheres = []
     for t in range(0, num):
-        newAgent = Agent(randrange(0, 50)-25, randrange(0, 50)-25, 0, 0)
+        newAgent = Agent(0.1+randrange(0, 50)-25, 0.1+randrange(0, 50)-25, 0, 0)
         agents.append(newAgent)
         agentSpheres.append(generateSphere(newAgent))
         
@@ -162,8 +162,12 @@ while(samePosition == False):
         agents[t].moveCircle(cr, radius, stepNr, precision)
         agentSpheres[t].pos = vector(agents[t].x, agents[t].y, 0)
         
-    time.sleep(1/200)
+    time.sleep(1/8000)
     
-    if(not samePlace(target.x, centerRotation.x, target.y, centerRotation.y, 0.01)):
-        centerRotation.moveTo(target, 0.01, 0.01)
+    if(not samePlace(target.x, centerRotation.x, target.y, centerRotation.y, 0.1)):
+        centerRotation.moveTo(target, 0.003, 0.003)
         crSphere.pos = vector(centerRotation.x, centerRotation.y, 0)
+    else:
+        target.x += randrange(-10, 10)
+        target.y += randrange(-10, 10)
+        targetSphere.pos = vector(target.x, target.y, 0)
