@@ -149,6 +149,7 @@ def cohere(agents, cohesion):
         
     
 canvas(width=1000, height=600) 
+canvas.resizable = True
 
 samePosition = False
 
