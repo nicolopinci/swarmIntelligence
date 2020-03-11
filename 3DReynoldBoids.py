@@ -11,6 +11,7 @@ from random import randrange
 import random
 from vpython import *
 import time
+import copy
 
 class Agent:
     def __init__(self, dim, vel, acc, agentType):
@@ -24,8 +25,8 @@ class Agent:
         
     def changeAcceleration(self, accelerations, factor):
         self.acc = accelerations
-        for a in self.acc:
-            a = a*factor
+        for a in range(0, len(self.acc)):
+            self.acc[a] = self.acc[a]*factor
         
     def changeVelocity(self, velocities):
         self.vel = velocities
@@ -92,7 +93,10 @@ class Agent:
         return minDistance
     
     def sortByDistance(self, agents):
-        return sorted(agents, key= lambda x:x.sortingKey(self))
+        agents.remove(self)
+        sortedArray = sorted(agents, key= lambda x:x.sortingKey(self))
+        agents.append(self)
+        return sortedArray
         
 def toRadius(volume):
     return math.pow(3*volume/(4*math.pi), 1/3)
@@ -107,17 +111,22 @@ def generateMultipleAgents(num):
         
     return [agents, agentSpheres]
     
-def separate(agents, minAllowed):
+def separate(agents, minAllowed, locality):
+
     for a in agents:
+        sortedAgents = a.sortByDistance(agents)
         numberDimensions = len(a.dim)
         randomDirection = [0, 0, 0]
         for d in range(0, numberDimensions):
             randomDirection[d] = random() - 0.5
             
         k = 0
-        while(a.minDistance(agents) < minAllowed):
+        while(a.minDistance(sortedAgents[0:locality]) < minAllowed):
             k += 1
-            a.dim = [a.dim[0] + k*randomDirection[0], a.dim[1] + k*randomDirection[1], a.dim[2] + k*randomDirection[2]]
+            newPosition = []
+            for d in range(0, numberDimensions):
+                newPosition.append(a.dim[d] + k*randomDirection[d])
+            a.moveTo(Agent(newPosition, [0, 0, 0], [0, 0, 0], ''))
      
         
 def findCurrentCenter(agents):
@@ -144,7 +153,11 @@ def cohere(agents, cohesion):
     for agent in agents:
         sortedAgents = agent.sortByDistance(agents)
         currentCenter = findCurrentCenter(sortedAgents[0:correctedCohesion])
-        centerAgent = Agent(currentCenter, [0, 0, 0], [0, 0, 0], 'fictiousCenter')
+        centerAgent = Agent(currentCenter, [0, 0, 0], [0, 0, 0], 'fictitiousCenter')
+        
+        for l in range(0, len(currentCenter)):
+            agent.acc[l] = 0.2*agent.distanceC(centerAgent, l)
+                 
         agent.moveTo(centerAgent)
         
     
@@ -153,8 +166,9 @@ canvas.resizable = True
 
 samePosition = False
 
-separation = 4
-cohesion = 5
+separation = 5
+cohesion = 3
+numberAgents = 50
 
 # Create center of rotation (leader)
 centerRotation = Agent([0, 0, 0], [0, 0, 0], [0, 0, 0], 'leader')
@@ -162,7 +176,7 @@ crSphere = centerRotation.generateSphere()
 crSphere.color = vector(1, 0, 0)
 
 # Create agents (boids)
-[agents, agentSpheres] = generateMultipleAgents(50)
+[agents, agentSpheres] = generateMultipleAgents(numberAgents)
 
 # Create a target (the point towards the center of rotation should move)
 target = Agent([10, 10, 0], [0, 0, 0], [0, 0, 0], 'target')
@@ -178,18 +192,18 @@ while(samePosition == False):
     for t in range(0, len(agents)):
         cr = centerRotation.dim
         radius = agents[t].distance(centerRotation)
-        agents[t].changeAcceleration(agents[t].distances(centerRotation), 0.000000001)
+        agents[t].changeAcceleration(centerRotation.acc, 1)
         
         newPosition = []
         
         for i in range(0, len(centerRotation.dim)):
-            newPosition.append(centerRotation.dim[i] + delta[i])
+            newPosition.append(agents[t].dim[i] - delta[i])
             
         newAgent = Agent(newPosition, [0, 0, 0], [0, 0, 0], 'tempTarget')
-        
+
         agents[t].moveTo(newAgent)
             
-    separate(agents, separation)
+    separate(agents, separation, 5)
     cohere(agents, cohesion)
     
     for t in range(0, len(agents)):
@@ -206,4 +220,4 @@ while(samePosition == False):
         target.dim[2] = randrange(-20, 20)
         target.updateSphere(targetSphere)
         
-    time.sleep(1/100)
+    time.sleep(0.01)
