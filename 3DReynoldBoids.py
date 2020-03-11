@@ -19,6 +19,9 @@ class Agent:
         self.acc = acc # accelerations
         self.agentType = agentType
         
+    def sortingKey(self, agent):
+        return self.distance(agent)
+        
     def changeAcceleration(self, accelerations, factor):
         self.acc = accelerations
         for a in self.acc:
@@ -87,6 +90,9 @@ class Agent:
                 minDistance = self.distance(a)
                 
         return minDistance
+    
+    def sortByDistance(self, agents):
+        return sorted(agents, key= lambda x:x.sortingKey(self))
         
 def toRadius(volume):
     return math.pow(3*volume/(4*math.pi), 1/3)
@@ -132,6 +138,15 @@ def calculateDelta(v1, v2):
         v3.append(v1[i] - v2[i])
         
     return v3
+
+def cohere(agents, cohesion):
+    correctedCohesion = max(0, min(cohesion, len(agents)))
+    for agent in agents:
+        sortedAgents = agent.sortByDistance(agents)
+        currentCenter = findCurrentCenter(sortedAgents[0:correctedCohesion])
+        centerAgent = Agent(currentCenter, [0, 0, 0], [0, 0, 0], 'fictiousCenter')
+        agent.moveTo(centerAgent)
+        
     
 canvas(width=1000, height=600) 
 
@@ -174,6 +189,7 @@ while(samePosition == False):
         agents[t].moveTo(newAgent)
             
     separate(agents, separation)
+    cohere(agents, cohesion)
     
     for t in range(0, len(agents)):
         agents[t].updateSphere(agentSpheres[t])
