@@ -121,14 +121,12 @@ def separate(agents, minAllowed, locality):
             randomDirection[d] = random() - 0.5
             
         k = 0
-        tempAgent = a
-        while(tempAgent.minDistance(sortedAgents[0:locality]) < minAllowed):
+        while(a.minDistance(sortedAgents[0:locality]) < minAllowed):
             k += 1
             newPosition = []
             for d in range(0, numberDimensions):
                 newPosition.append(a.dim[d] + k*randomDirection[d])
-            tempAgent = Agent(newPosition, [0, 0, 0], [0, 0, 0], '')
-            a.moveTo(tempAgent)
+            a.moveTo(Agent(newPosition, [0, 0, 0], [0, 0, 0], ''))
      
         
 def findCurrentCenter(agents):
@@ -168,15 +166,18 @@ canvas.resizable = True
 
 samePosition = False
 
-separation = 3
-cohesion = 2
-locality = 20
+separation = 5
+cohesion = 3
 numberAgents = 50
 
-# Create center of rotation (leader)
-centerRotation = Agent([0, 0, 0], [0, 0, 0], [0, 0, 0], 'leader')
-crSphere = centerRotation.generateSphere()
-crSphere.color = vector(1, 0, 0)
+# Prepare narrow path
+leftWall = box(pos=vector(-10, 0, 0), length=19, height=20, width=2, color=vector(0.776, 0.886, 0.890), opacity=0.8)
+rightWall = box(pos=vector(10, 0, 0), length=19, height=20, width=2, color=vector(0.776, 0.886, 0.890), opacity=0.8)
+
+# Leader
+leader = Agent([0, 0, 0], [0, 0, 0], [0, 0, 0], 'leader')
+leaderSphere = leader.generateSphere()
+leaderSphere.color = vector(1, 0, 0)
 
 # Create agents (boids)
 [agents, agentSpheres] = generateMultipleAgents(numberAgents)
@@ -206,7 +207,7 @@ while(samePosition == False):
 
         agents[t].moveTo(newAgent)
             
-    separate(agents, separation, locality)
+    separate(agents, separation, 5)
     cohere(agents, cohesion)
     
     for t in range(0, len(agents)):
