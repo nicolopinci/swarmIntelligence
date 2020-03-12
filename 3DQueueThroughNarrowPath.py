@@ -41,7 +41,8 @@ class Agent:
                 sign = -1
                 
             self.dim[i] += sign*(self.vel[i] + 0.5*self.acc[i])
-                            
+     
+        
     def distance(self, target):
         sqDist = 0
         for i in range(0, len(self.dim)):
@@ -105,7 +106,7 @@ def generateMultipleAgents(num):
     agents = []
     agentSpheres = []
     for t in range(0, num):
-        newAgent = Agent([0.1+randrange(0, 50)-25, 0.1+randrange(0, 50)-25, 0.1+randrange(0, 50)-25], [0, 0, 0], [0, 0, 0], 'agent')
+        newAgent = Agent([0.1+randrange(0, 50)-25, 0.1+randrange(0, 50)-25, 0.1+randrange(5, 50)], [0, 0, 0], [0, 0, 0], 'agent')
         agents.append(newAgent)
         agentSpheres.append(newAgent.generateSphere())
         
@@ -118,7 +119,11 @@ def separate(agents, minAllowed, locality):
         numberDimensions = len(a.dim)
         randomDirection = [0, 0, 0]
         for d in range(0, numberDimensions):
-            randomDirection[d] = random() - 0.5
+            if(d == 2):
+                randomDirection[d] = random()*(-1)
+            else:
+                randomDirection[d] = random() - 0.5
+
             
         k = 0
         while(a.minDistance(sortedAgents[0:locality]) < minAllowed):
@@ -126,9 +131,31 @@ def separate(agents, minAllowed, locality):
             newPosition = []
             for d in range(0, numberDimensions):
                 newPosition.append(a.dim[d] + k*randomDirection[d])
-            a.moveTo(Agent(newPosition, [0, 0, 0], [0, 0, 0], ''))
+            newAgPos = Agent(newPosition, [0, 0, 0], [0, 0, 0], '')
+            a.changeAcceleration(a.distances(newAgPos), 10)
+            a.moveTo(newAgPos)
      
+def findAfterSlit(agents, leader):
+    outAgents = []
+    
+    for agent in agents:
+        if(agent.dim[2] < -1.5):
+            outAgents.append(agent)
+            
+    if(leader.dim[2] < -1.5):
+        outAgents.append(leader)
         
+    return outAgents
+
+def findBeforeSlit(agents):
+    outAgents = []
+    
+    for agent in agents:
+        if(agent.dim[2] > -1.5):
+            outAgents.append(agent)
+        
+    return outAgents
+    
 def findCurrentCenter(agents):
     numDim = len(agents[0].dim)
     center = []
@@ -160,6 +187,12 @@ def cohere(agents, cohesion):
                  
         agent.moveTo(centerAgent)
         
+def generateLastPositions(agents):
+    out = []
+    for agent in agents:
+        out.append(0)
+        
+    return out
     
 canvas(width=1000, height=600) 
 canvas.resizable = True
@@ -168,14 +201,14 @@ samePosition = False
 
 separation = 5
 cohesion = 3
-numberAgents = 50
+numberAgents = 100
 
 # Prepare narrow path
 leftWall = box(pos=vector(-10, 0, 0), length=19, height=20, width=2, color=vector(0.776, 0.886, 0.890), opacity=0.8)
 rightWall = box(pos=vector(10, 0, 0), length=19, height=20, width=2, color=vector(0.776, 0.886, 0.890), opacity=0.8)
 
 # Leader
-leader = Agent([0, 0, 0], [0, 0, 0], [0, 0, 0], 'leader')
+leader = Agent([0, 0, 10], [0, 0, 0], [0, 0, 0], 'leader')
 leaderSphere = leader.generateSphere()
 leaderSphere.color = vector(1, 0, 0)
 
@@ -183,45 +216,56 @@ leaderSphere.color = vector(1, 0, 0)
 [agents, agentSpheres] = generateMultipleAgents(numberAgents)
 
 # Create a target (the point towards the center of rotation should move)
-target = Agent([10, 10, 0], [0, 0, 0], [0, 0, 0], 'target')
+target = Agent([0, 0, -30], [0, 0, 0], [0, 0, 0], 'target')
 targetSphere = target.generateSphere()
 targetSphere.color = vector(0, 1, 0)
 
+leaderQueue = []
+leaderQueue.append(leader.dim)
+lastPositions = generateLastPositions(agents)
+
 # Iteration
 while(samePosition == False):
+       
+    consideredAgents = findBeforeSlit(agents)
     
-    currentCenter = findCurrentCenter(agents)
-    delta = calculateDelta(currentCenter, centerRotation.dim)
-    
-    for t in range(0, len(agents)):
-        cr = centerRotation.dim
-        radius = agents[t].distance(centerRotation)
-        agents[t].changeAcceleration(centerRotation.acc, 1)
+    if(len(consideredAgents) > 0):
+        closestAgent = leader.closestAgent(consideredAgents)
+        agIndex = 0
         
-        newPosition = []
-        
-        for i in range(0, len(centerRotation.dim)):
-            newPosition.append(agents[t].dim[i] - delta[i])
-            
-        newAgent = Agent(newPosition, [0, 0, 0], [0, 0, 0], 'tempTarget')
+        for t in range(0, len(agents)):
+            if(closestAgent.samePlace(agents[t], 0.0001)):
+                agIndex = t
 
-        agents[t].moveTo(newAgent)
-            
-    separate(agents, separation, 5)
-    cohere(agents, cohesion)
+        posToMoveIdx = lastPositions[agIndex] + 1 # index of new position in the leaderQueue
+                                
+        if(posToMoveIdx < len(leaderQueue)):
+            previous = Agent(leaderQueue[posToMoveIdx], [0, 0, 0], [0, 0, 0], 'positional')
+            agents[agIndex].changeAcceleration(agents[agIndex].distances(previous), 1)
+            agents[agIndex].moveTo(previous)
+    
+            for p in range(0, len(leaderQueue)):
+                if(agents[agIndex].samePlace(Agent(leaderQueue[p], [0, 0, 0], [0, 0, 0], ''), 0.1)):
+                    lastPositions[agIndex] = p
+
+    afterSlit = findAfterSlit(agents, leader)
+    separate(afterSlit, separation, 5)
+#    cohere(agents, cohesion)
     
     for t in range(0, len(agents)):
         agents[t].updateSphere(agentSpheres[t])
+
     
-    if(not target.samePlace(centerRotation, 1)):
-        centerRotation.changeAcceleration(centerRotation.distances(target), 0.1)
-        centerRotation.moveTo(target)
-        centerRotation.updateSphere(crSphere)
+    if(not target.samePlace(leader, 0.000001)):
+        leader.changeAcceleration(leader.distances(target), 0.1)
+        leader.moveTo(target)
+        leader.updateSphere(leaderSphere)
+        leaderQueue.append(copy.deepcopy(leader).dim)
         
-    else:
-        target.dim[0] = randrange(-20, 20)
-        target.dim[1] = randrange(-20, 20)
-        target.dim[2] = randrange(-20, 20)
-        target.updateSphere(targetSphere)
+#    else:
+#        target.dim[0] = target.dim[0]*10
+#        target.dim[1] = target.dim[1]*10
+#        target.dim[2] = target.dim[2]*10
+#        target.updateSphere(targetSphere)
         
-    time.sleep(0.01)
+    time.sleep(0.001)

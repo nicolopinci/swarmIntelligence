@@ -143,6 +143,7 @@ def findCurrentCenter(agents):
         
     return center
 
+
 def calculateDelta(v1, v2):
     v3 = []
     for i in range(0, len(v1)):
