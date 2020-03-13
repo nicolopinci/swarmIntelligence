@@ -94,19 +94,10 @@ offset = 0.1
 radius = 0.5
 
 [wallPath, pathPath] = defineNGonalWall(1, 10, 2, vector(0, 0, 0))
-#[secondWallPath, secondPathPath] = defineNGonalWall(1, )
-#exagonWall = paths.circle(radius = 2, np = 6, pos=vec(0, 0, 0))
-#squareWall = paths.circle(radius = 2, np = 4, pos=vec(-4, 0, 0))
-#triangleWall = paths.circle(radius = 4, np = 3, pos=vec(0, 0, 6))
-#
-#exagonFollPath = obtainOffsetPath(exagonWall, 2, 6, vec(0, 0, 0))
-#squareFollPath = obtainOffsetPath(squareWall, 2, 4, vec(-4, 0, 0))
-#triangleFollPath = obtainOffsetPath(triangleWall, 4, 3, vec(0, 0, 6))
-#
-#wallPath = exagonWall + squareWall + triangleWall
-wall = extrusion(path=wallPath, shape=shapes.rectangle(width=offset, height=8))
 
-#pathPath = exagonFollPath + squareFollPath + triangleFollPath
+wall = extrusion(path=wallPath, shape=shapes.rectangle(width=offset, height=8))
+wall.opacity = 0.5
+
 pathToFollow = extrusion(path=pathPath, shape=shapes.rectangle(width=offset, height=8))
 pathToFollow.opacity = 0
 
@@ -115,7 +106,13 @@ agentSphere = wallFollower.generateSphere(radius)
 
 previous = [0, 0, 0]
 
+waitNewWall = 10
+w = 0
+
 while(True):
+    
+    w += 1
+    
     points = []
     for point in pathPath:
         points.append([point.x, point.y, point.z])
@@ -124,12 +121,38 @@ while(True):
     
     closest = closestWallPoints[1]
     
-    if(norm(difference(closest, previous)) <= 0.1):
+    if(norm(difference(closest, previous)) <= 0.01 and w>0):
         closest = closestWallPoints[2]
     
     previous = copy.deepcopy(wallFollower.pos)
 
     wallFollower.moveTo(closest, difference(closest, wallFollower.pos), 0.1, agentSphere)
-#    wallFollower.updateSphere(agentSphere)
+    
+    if(w >= waitNewWall):
         
-#    time.sleep(1)
+        pathToFollow.visible = False
+        wall.visible = False
+        
+        del pathToFollow
+        del wall
+        
+        rad = randrange(1, 5)
+        
+        [wallPath, pathPath] = defineNGonalWall(1, randrange(3, 10), rad, vector(0, 0, 0))
+
+        wall = extrusion(path=wallPath, shape=shapes.rectangle(width=offset, height=8))
+        wall.opacity = 0.5
+        
+        pathToFollow = extrusion(path=pathPath, shape=shapes.rectangle(width=offset, height=8))
+        pathToFollow.opacity = 0
+        
+        w = 0
+        
+        wallFollower = Agent([2*rad, 0, 2*rad])
+        
+        agentSphere.visible = False
+        
+        agentSphere = wallFollower.generateSphere(radius)
+        
+        previous = [2*rad, 0, 2*rad]
+        
