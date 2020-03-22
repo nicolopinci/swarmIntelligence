@@ -12,11 +12,12 @@ from vpython import *
 import time
 
 class Target:
-    def __init__(self, x, y, vx, vy):
+    def __init__(self, x, y, vx, vy, value):
         self.x = x
         self.y = y
         self.vx = vx
         self.vy = vy
+        self.value = value
         
     def changeVelocity(self, vx, vy):
         self.vx = vx
@@ -80,7 +81,18 @@ class Agent:
                 
         return minTarget
             
-            
+    def maxValueTarget(self, targetList):
+        maxValue = targetList[0].value
+        maxTarget = targetList[0]
+        
+        for t in targetList:
+            if(t.value > maxValue):
+                maxValue = t.value
+                maxTarget = t
+                
+        return maxTarget
+    
+        
     def moveTo(self, target):     
         signs = [1, 1]
         if(self.x > target.x):
@@ -110,19 +122,28 @@ def generateMultipleTargets(num):
     targets = []
     targetSpheres = []
     for t in range(0, num):
-        newTarget = Target(randrange(0, 10)-5, randrange(0, 10)-5, 0, 0)
+        newTarget = Target(randrange(0, 10)-5, randrange(0, 10)-5, 0, 0, randrange(0, 50))
         targets.append(newTarget)
         targetSpheres.append(generateSphere(newTarget))
+        targetSpheres[t].color = vector(0, newTarget.value/50, 0)
         
     return [targets, targetSpheres]
     
-
-
+def lookForSpheres(target, targetSpheres):
+    
+    spheres = []
+    
+    for t in targetSpheres:
+        if(target.x == t.pos.x and target.y == t.pos.y):
+            spheres.append(t)
+    
+    return spheres
+    
 samePosition = False
 agent = Agent(0, 0, 0, 0, 1)
 [targets, targetSpheres] = generateMultipleTargets(10)
 
-currentClosest = agent.closestTarget(targets)
+currentClosest = agent.maxValueTarget(targets)
 
 distanceX = agent.distanceX(currentClosest)
 distanceY = agent.distanceY(currentClosest)
@@ -130,17 +151,33 @@ distanceY = agent.distanceY(currentClosest)
 agentSphere = generateSphere(agent)
 agentSphere.color = vector(1, 0, 0)
 
+totalValue = 0
+collectedValue = 0
+
+toBeDeleted = None
+
+for t in targets:
+    totalValue += t.value
+    
 while(samePosition == False):
     agent.moveTo(currentClosest)
     agentSphere.pos = vector(agent.x, agent.y, 0)
 
-
+    indexDelete = None
+    
     for t in range(0, len(targets)):
-        targets[t].randomMove()
-        targetSpheres[t].pos = vector(targets[t].x, targets[t].y, 0)
+        if(not targets[t] == toBeDeleted):
+            targets[t].randomMove()
+            targetSpheres[t].pos = vector(targets[t].x, targets[t].y, 0)
+        else:
+            indexDelete = t
+            
+    if(not toBeDeleted==None and not indexDelete==None):
+        del targets[indexDelete]
+        targetSpheres[indexDelete].visible = False
+        del targetSpheres[indexDelete]
         
-        
-    currentClosest = agent.closestTarget(targets)
+    currentClosest = agent.maxValueTarget(targets)
     
     
     currentDistanceX = agent.distanceX(currentClosest)
@@ -155,4 +192,10 @@ while(samePosition == False):
     time.sleep(1)
     
     if(samePlace(agent.x, currentClosest.x, agent.y, currentClosest.y, 0.1)):
+        collectedValue += currentClosest.value
+        toBeDeleted = currentClosest
+        
+    if(collectedValue == totalValue):
         samePosition = True
+        
+    print("Performance: " + str(collectedValue/totalValue))
