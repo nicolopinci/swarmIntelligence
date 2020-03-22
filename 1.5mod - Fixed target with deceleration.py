@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sun Mar  8 20:32:42 2020
-
-@author: nicolo
+The agent moves towards a fixed target changing its velocity as it approaches the target (it decelerates as the distance decreases).
 """
 
 import math
@@ -93,22 +91,33 @@ target = Target(10, 10, 10, 10)
 distanceX = agent.distanceX(target)
 distanceY = agent.distanceY(target)
 
+initialDistance = agent.distance(target)
+
+performance = 0
+previousPerformance = 0
+
+
 while(samePosition == False):
     agent.moveTo(target)
     
-    agentSphere.pos = vector(agent.x, agent.y, 0)
-    targetSphere.pos = vector(target.x, target.y, 0)
-    
-    currentDistanceX = agent.distanceX(target)
-    currentDistanceY = agent.distanceY(target)
+    performance = max(0, 1-agent.distance(target)/initialDistance)
 
-    agent.accelerateX(distanceX)
-    agent.accelerateY(distanceY)
-
-    distanceX = currentDistanceX
-    distanceY = currentDistanceY
+    if(performance >= previousPerformance):
+        agentSphere.pos = vector(agent.x, agent.y, 0)
+        targetSphere.pos = vector(target.x, target.y, 0)
         
-    time.sleep(0.1)
+        currentDistanceX = agent.distanceX(target)
+        currentDistanceY = agent.distanceY(target)
     
-    if(samePlace(agent.x, target.x, agent.y, target.y, 0.01)):
+        agent.accelerateX(distanceX)
+        agent.accelerateY(distanceY)
+    
+        distanceX = currentDistanceX
+        distanceY = currentDistanceY
+    
+        print("Performance: " + str(performance)) 
+        previousPerformance = performance
+    else:
         samePosition = True
+            
+    time.sleep(0.1)
