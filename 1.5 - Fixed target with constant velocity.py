@@ -90,6 +90,7 @@ target = Target(10, 10, 10, 10)
 
 distanceX = agent.distanceX(target)
 distanceY = agent.distanceY(target)
+
 initialDistance = agent.distance(target)
 
 performance = 0

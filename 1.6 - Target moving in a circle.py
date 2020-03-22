@@ -90,15 +90,15 @@ def samePlace(x1, x2, y1, y2, prec):
 def toRadius(volume):
     return math.pow(3*volume/(4*math.pi), 1/3)
 
+circleRadius = 5
+
 agentSphere = sphere(pos=vector(0,0,0), radius=0.5, color=vector(0.7, 0.85, 0.9))
-targetSphere = sphere(pos=vector(10,10,0), radius=0.5)    
+targetSphere = sphere(pos=vector(circleRadius,0,0), radius=0.5)    
 
 samePosition = False
 agent = Agent(0, 0, 0, 0, 1)
 
-radius = 5
-
-target = Target(radius, 0, 0, 0)
+target = Target(circleRadius, 0, 0, 0)
 
 distanceX = agent.distanceX(target)
 distanceY = agent.distanceY(target)
@@ -106,15 +106,23 @@ distanceY = agent.distanceY(target)
 circleCenter = [0, 0, 0]
 precision = 0.1
 
-totSteps = 2*math.pi*radius/precision
+totSteps = 2*math.pi*circleRadius/precision
 stepNr = 0
 
+initialDistance = agent.distance(target)
+
+performance = 0
+
 while(samePosition == False):
+    
+    agent.moveTo(target)
+
     stepNr += 1
     stepNr = stepNr%totSteps
-    target.moveCircle(circleCenter, radius, stepNr, precision)
-    agent.moveTo(target)
-    
+    target.moveCircle(circleCenter, circleRadius, stepNr, precision)
+
+    performance = max(0, 1-agent.distance(target)/initialDistance)
+
     agentSphere.pos = vector(agent.x, agent.y, 0)
     targetSphere.pos = vector(target.x, target.y, 0)
     
@@ -126,8 +134,7 @@ while(samePosition == False):
 
     distanceX = currentDistanceX
     distanceY = currentDistanceY
-        
-    time.sleep(0.1)
-    
-    if(samePlace(agent.x, target.x, agent.y, target.y, 0.1)):
-        samePosition = True
+
+    print("Performance: " + str(performance)) 
+            
+    time.sleep(0.2)        
