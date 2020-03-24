@@ -163,6 +163,21 @@ def cohere(agents, cohesion):
                  
         agent.moveTo(centerAgent)
         
+def align(agents, centerRotation):
+    for t in range(0, len(agents)):
+        cr = centerRotation.dim
+        radius = agents[t].distance(centerRotation)
+        agents[t].changeAcceleration(centerRotation.acc, 1)
+        
+        newPosition = []
+        
+        for i in range(0, len(centerRotation.dim)):
+            newPosition.append(agents[t].dim[i] - delta[i])
+            
+        newAgent = Agent(newPosition, [0, 0, 0], [0, 0, 0], 'tempTarget')
+
+        agents[t].moveTo(newAgent)
+    
     
 canvas(width=1000, height=600) 
 canvas.resizable = True
@@ -193,20 +208,7 @@ while(samePosition == False):
     currentCenter = findCurrentCenter(agents)
     delta = calculateDelta(currentCenter, centerRotation.dim)
     
-    for t in range(0, len(agents)):
-        cr = centerRotation.dim
-        radius = agents[t].distance(centerRotation)
-        agents[t].changeAcceleration(centerRotation.acc, 1)
-        
-        newPosition = []
-        
-        for i in range(0, len(centerRotation.dim)):
-            newPosition.append(agents[t].dim[i] - delta[i])
-            
-        newAgent = Agent(newPosition, [0, 0, 0], [0, 0, 0], 'tempTarget')
-
-        agents[t].moveTo(newAgent)
-            
+    align(agents, centerRotation)        
     separate(agents, separation, locality)
     cohere(agents, cohesion)
     
