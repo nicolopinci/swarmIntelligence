@@ -188,7 +188,7 @@ samePosition = False
 
 separation = 5
 cohesion = 10
-numberAgents = 100
+numberAgents = 20
 
 # Prepare narrow path
 leftWall = box(pos=vector(-10, 0, 0), length=19, height=20, width=2, color=vector(0.776, 0.886, 0.890), opacity=0.8)
@@ -226,12 +226,12 @@ while(samePosition == False):
                         
         posToMoveIdx = lastPositions[agIndex] + 1
 
-        if(a < len(leaderQueue)-1 and posToMoveIdx < len(leaderQueue)):
+        if(a < len(leaderQueue)-1 and posToMoveIdx < len(leaderQueue)): # if there is an available position already visited by the leader
             previous = Agent(leaderQueue[posToMoveIdx], [0, 0, 0], [0, 0, 0], 'positional')
             
             remainHere = False
             
-            for otherAgent in agents:
+            for otherAgent in agents: # check if the agent is very close to the destination
                 if(otherAgent.distance(previous) < 1):
                     remainHere = True
                     
@@ -242,12 +242,6 @@ while(samePosition == False):
             for p in range(0, len(leaderQueue)):
                 if(agents[agIndex].samePlace(Agent(leaderQueue[p], [0, 0, 0], [0, 0, 0], ''), 1)):
                     lastPositions[agIndex] = p
-                    
-    
-#    for agent in agents:
-#        agent.separate(agents, separation, 5)
-#        agent.cohere(agents, cohesion)
-        
         
     for t in range(0, len(agents)):
         agents[t].updateSphere(agentSpheres[t])
@@ -258,7 +252,7 @@ while(samePosition == False):
         leader.moveTo(target)
         newPosition = copy.deepcopy(leader.dim)
         leader.updateSphere(leaderSphere)
-        if(calculateDeltaSqPosition(newPosition, leaderQueue[-1]) >= 2):
+        if(calculateDeltaSqPosition(newPosition, leaderQueue[-1]) >= 2): # the leader has travelled a little bit
             leaderQueue.append(copy.deepcopy(leader).dim)
             
     time.sleep(0.05)
