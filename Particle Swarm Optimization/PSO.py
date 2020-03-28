@@ -95,24 +95,33 @@ def generateMultipleAgents(num):
     agents = []
     agentSpheres = []
     for t in range(0, num):
-        newAgent = Agent([0.1+randrange(0, 50)-25, 0.1+randrange(0, 50)-25], [0, 0])
+        newAgent = Agent([0.1+randrange(0, 50)-25, 0.1+randrange(0, 50)-25, 0.1+randrange(0, 50)-25], [0, 0, 0])
         agents.append(newAgent)
         agentSpheres.append(newAgent.generateSphere())
         
     return [agents, agentSpheres]
     
-def fitness(position):
-    return min(position[1], 10)
-
+def fitness(position):   
+    funct = -position[0]*position[0] # function to optimize
+    return funct
 
 canvas(width=1000, height=600) 
 canvas.resizable = True
 
 samePosition = False
 
-locality = 30
-numberAgents = 200
+locality = 50
+numberAgents = 100
 
+# Create agents in the goal positions (for debug purposes)
+# In this example the minimum is a plane, defined as x = 0, therefore I generate a se of agents with x = 0 and variable y and z
+for a in range(-20, 20):
+    for b in range(-20, 20):
+        maximumAgent = Agent([0, a, b], [0, 0, 0])
+        maxSphere = maximumAgent.generateSphere()
+        maxSphere.color = vec(1, 0, 0)
+        maxSphere.opacity = 0.3
+            
 # Create agents (boids)
 [agents, agentSpheres] = generateMultipleAgents(numberAgents)
     
@@ -120,8 +129,7 @@ numberAgents = 200
 while(samePosition == False):
     
     for a in range(0, len(agents)):
-        agents[a].computePosition(0.7, 0.1, 0.1, agents, locality)
+        agents[a].computePosition(0.5, 0.8, 0.8, agents, locality)
         agents[a].updateSphere(agentSpheres[a])
-#        print(agents[a].pos)
     
-    time.sleep(0.01)
+    time.sleep(0.001)
