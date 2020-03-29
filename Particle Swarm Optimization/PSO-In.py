@@ -102,10 +102,17 @@ def generateMultipleAgents(num):
     return [agents, agentSpheres]
     
 def fitness(position):   
-    funct = -position[0]*position[0] # function to optimize
-    return funct
+    funct = defineFunction()
+    funct = "**".join(funct.split("^"))
+    funct = "position[0]".join(funct.split("x"))
+    funct = "position[1]".join(funct.split("y"))
+    funct = "position[2]".join(funct.split("z"))
+    return eval(funct)
 
-canvas(width=1000, height=600) 
+def defineFunction():
+    return '-x^2 - y^2 - z^2'
+
+canvas(width=1000, height=600, title='Particle Swarm Optimization') 
 canvas.resizable = True
 
 samePosition = False
@@ -115,21 +122,27 @@ numberAgents = 100
 
 # Create agents in the goal positions (for debug purposes)
 # In this example the minimum is a plane, defined as x = 0, therefore I generate a se of agents with x = 0 and variable y and z
-for a in range(-20, 20):
+'''for a in range(-20, 20):
     for b in range(-20, 20):
         maximumAgent = Agent([0, a, b], [0, 0, 0])
         maxSphere = maximumAgent.generateSphere()
         maxSphere.color = vec(1, 0, 0)
-        maxSphere.opacity = 0.3
+        maxSphere.opacity = 0.3'''
             
 # Create agents (boids)
 [agents, agentSpheres] = generateMultipleAgents(numberAgents)
     
+currentMaximum = fitness(agents[0].pos)
+
 # Iteration
 while(samePosition == False):
     
     for a in range(0, len(agents)):
         agents[a].computePosition(0.5, 0.8, 0.8, agents, locality)
         agents[a].updateSphere(agentSpheres[a])
+        
+        if(fitness(agents[a].pos) >= currentMaximum):
+            currentMaximum = fitness(agents[a].pos)
     
+    print(currentMaximum)    
     time.sleep(0.001)
