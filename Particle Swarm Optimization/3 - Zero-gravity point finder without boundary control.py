@@ -130,26 +130,6 @@ def generateMultipleBodies(num):
         
     return [celestialBodies, celestialSpheres]
     
-def calculateBoundaries(celestialBodies):
-    
-    xPos = [i.pos[0] for i in celestialBodies]
-    yPos = [i.pos[1] for i in celestialBodies]
-    zPos = [i.pos[2] for i in celestialBodies]
-
-    xMax = max(xPos)
-    xMin = min(xPos)
-    
-    yMax = max(yPos)
-    yMin = min(yPos)
-    
-    zMax = max(zPos)
-    zMin = min(zPos)
-    
-    return [xMin, xMax, yMin, yMax, zMin, zMax]
-
-def insideBoundaries(position, boundaries):
-    return (position[0] <= boundaries[1] and position[0] >= boundaries[0] and position[1] <= boundaries[3] and position[1] >= boundaries[2] and position[2] <= boundaries[5] and position[2] >= boundaries[4])
-    
 def fitness(position, celestialBodies):   
     
     totalForce = np.array([0.0, 0.0, 0.0])
@@ -166,6 +146,15 @@ def defineOmega(w0, wfin, currentIteration, numberIterations):
 
 canvas(width=1000, height=600, title='Particle Swarm Optimization') 
 canvas.resizable = True
+
+# Create agents in the goal positions (for debug purposes)
+# In this example the minimum is a plane, defined as x = 0, therefore I generate a se of agents with x = 0 and variable y and z
+'''for a in range(-20, 20):
+    for b in range(-20, 20):
+        maximumAgent = Agent([0, a, b], [0, 0, 0])
+        maxSphere = maximumAgent.generateSphere()
+        maxSphere.color = vec(1, 0, 0)
+        maxSphere.opacity = 0.3'''
             
 # Definition of parameters given as input
 numberAgents = int(input("Number of agents: "))
@@ -180,10 +169,7 @@ numberCelestial = int(input("Number of celestial bodies: "))
 [agents, agentSpheres] = generateMultipleAgents(numberAgents)
 [celestialBodies, celestialSpheres] = generateMultipleBodies(numberCelestial)
 
-boundaries = calculateBoundaries(celestialBodies)
-
 currentMaximum = fitness(agents[0].pos, celestialBodies)
-bestPosition = agents[0].pos
 
 # Source for drawing with Spyder: https://stackoverflow.com/questions/10944621/dynamically-updating-plot-in-matplotlib
 plt.ion()
@@ -210,7 +196,7 @@ ydata = []
 d.on_launch()
 
 k = 0 
-
+  
 # Iteration
 while(k < maxK):
     
@@ -220,21 +206,11 @@ while(k < maxK):
         agents[a].computePosition(w0, wf, k, maxK, c1, c2, agents, locality)
         agents[a].updateSphere(agentSpheres[a])
         
-        if(insideBoundaries(agents[a].pos, boundaries)):
-            if(fitness(agents[a].pos, celestialBodies) >= currentMaximum):
-                currentMaximum = fitness(agents[a].pos, celestialBodies)
-                bestPosition = agents[a].pos
-        else:
-            agents[a].pos = [randrange(int(boundaries[0]), int(boundaries[1])), randrange(int(boundaries[2]), int(boundaries[3])), randrange(int(boundaries[4]), int(boundaries[5]))]
-            agents[a].bestPos = agents[a].pos
-            agents[a].updateSphere(agentSpheres[a])
+        if(fitness(agents[a].pos, celestialBodies) >= currentMaximum):
+            currentMaximum = fitness(agents[a].pos, celestialBodies)
             
     xdata.append(k)
     ydata.append(currentMaximum)
     d.on_running(xdata, ydata)
         
     time.sleep(0.001)
-
-G = 6.67*math.pow(10, -11) # N*m^2/kg^2.    
-print("The best position has coordinates (" + str(bestPosition[0]) + ", " + str(bestPosition[1]) + ", " + str(bestPosition[2]) + ")")
-print("The total gravitational potential in that position is " + str(fitness(bestPosition, celestialBodies)*(-1)*G) + " [N/m]")
