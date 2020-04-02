@@ -162,6 +162,7 @@ c2 = float(input("Local search factor: "))
 c1 = float(input("Global search factor: "))
 locality = int(input("Number of agents in a cluster: "))
 maxVel = float(input("Maximum velocity: "))
+intermediateSteps = int(input("Number of steps for sub-path: "))
 
 # Create agents (boids)
 [agents, agentSpheres] = generateMultipleOrigins(numberAgents, [10, 10], maxVel)
@@ -231,24 +232,42 @@ while(k < maxK):
     
     k += 1
     
-    for a in range(0, len(agents)):
-        agents[a].computePosition(w0, wf, k, maxK, c1, c2, agents, locality, target)
-        agents[a].updateSphere(agentSpheres[a])
-        
-        if(target.distance(agents[a].pos) <= currentMinimum):
+    interm = 1
+    
+    bestIntermediatePaths = [[copy.deepcopy(agent)] for agent in agents]
+    
+    while(interm < intermediateSteps):
+        interm += 1
+    
+        for a in range(0, len(agents)):
+            previousAgent = copy.deepcopy(agents[a])
+            agents[a].computePosition(w0, wf, k, maxK, c1, c2, agents, locality, target)
+            agents[a].updateSphere(agentSpheres[a])
+            
             collision = False
             for ob in obstacles:
                 if(ob.intersection(agents[a])):
                     collision = True
-            if(collision == False):
-                currentMinimum = target.distance(agents[a].pos)
-                minPosition = agents[a].pos
-      
+                    agents[a] = previousAgent
+
+            bestIntermediatePaths[a].append(copy.deepcopy(agents[a]))
+            
+                        
+        currentMinimum = copy.deepcopy(target.distance(bestIntermediatePaths[0][-1].pos))
+        minIndex = 0
+        currentIndex = 0
+        
+        for path in bestIntermediatePaths:
+            if(len(path)>0 and target.distance(path[-1].pos) < currentMinimum):
+                currentMinimum = copy.deepcopy(target.distance(path[-1].pos))
+                minIndex = copy.deepcopy(currentIndex)
+            currentIndex += 1
+  
     xdata.append(k)
     ydata.append(currentMinimum)
-    bestPath.append(copy.deepcopy(minPosition))
     fitnessGraph.on_running(xdata, ydata)
-    
+
+    bestPath.append(copy.deepcopy(bestIntermediatePaths[minIndex][-1].pos))
     pathGraph.on_running([i[0] for i in bestPath], [i[1] for i in bestPath])
     
     agents = []
@@ -257,11 +276,13 @@ while(k < maxK):
         agentSphere.visible = False
         del agentSphere
             
-    [agents, agentSpheres] = generateMultipleOrigins(numberAgents, minPosition, maxVel)
+    
+    [agents, agentSpheres] = generateMultipleOrigins(numberAgents, bestIntermediatePaths[minIndex][-1].pos, maxVel)
 
     for a in range(0, len(agents)):
         agents[a].updateSphere(agentSpheres[a])
         
-    bestSphere = drawBestSphere(minPosition)
+    for b in range(0, len(bestIntermediatePaths[minIndex])):
+        bestSphere = drawBestSphere(bestIntermediatePaths[minIndex][b].pos)
     
     time.sleep(0.1)
