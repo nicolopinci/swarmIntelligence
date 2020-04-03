@@ -21,11 +21,31 @@ class Obstacle:
         self.pos = pos
         self.side = side
         
-    def intersection(self, agent):
+    def pointIntersection(self, agent):
         if(agent.distance(self.pos) <= 0.5 + self.side*1.414):
             return True
         else:
             return False
+        
+    def lineIntersection(self, pos1, pos2):
+        foundIntersection = False
+        
+        t = 0
+        distance12 = Agent(pos1, np.zeros(len(pos1))).distance(pos2)
+        deltaT = None
+        
+        if(distance12 > 1):
+            deltaT = 1/distance12
+        else:
+            deltaT = 1
+        
+        while(foundIntersection == False and t<=1):
+            currentPosition = np.array(pos1) + t*np.array(pos2)
+            if(self.pointIntersection(Agent(currentPosition, np.zeros(len(currentPosition)))) == True):
+                foundIntersection = True
+            t += deltaT
+        
+        return foundIntersection
     
     def represent(self):
         posVector = None
@@ -246,7 +266,7 @@ while(k < maxK):
             
             collision = False
             for ob in obstacles:
-                if(ob.intersection(agents[a])):
+                if(ob.lineIntersection(agents[a].pos, previousAgent.pos)):
                     collision = True
                     agents[a] = previousAgent
 

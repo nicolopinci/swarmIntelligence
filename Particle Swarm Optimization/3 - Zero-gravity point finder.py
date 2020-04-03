@@ -235,6 +235,11 @@ while(k < maxK):
         
     time.sleep(0.001)
 
-G = 6.67*math.pow(10, -11) # N*m^2/kg^2.    
+G = 6.67*math.pow(10, -11) # N*m^2/kg^2
+g = 9.81 # m/s^2
+
+acceleration = fitness(bestPosition, celestialBodies)*(-1)*G
+
 print("The best position has coordinates (" + str(bestPosition[0]) + ", " + str(bestPosition[1]) + ", " + str(bestPosition[2]) + ")")
-print("The total gravitational potential in that position is " + str(fitness(bestPosition, celestialBodies)*(-1)*G) + " [N/m]")
+print("The total gravitational acceleration in that position is " + str(acceleration) + " [m/s^2]")
+print("This acceleration is equal to " + str(100*acceleration/g) + " % of the average gravitational acceleration on the Earth")
