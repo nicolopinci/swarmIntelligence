@@ -30,24 +30,20 @@ class Obstacle:
             return False
         
     def lineIntersection(self, pos1, pos2):
-        foundIntersection = False
+        line = Segment(Point(pos1[0], pos1[1]), Point(pos2[0], pos2[1]))
         
-        t = 0
-        distance12 = Agent(pos1, np.zeros(len(pos1))).distance(pos2)
-        deltaT = None
+        polPoints = []
+        for i in range(0, 4):
+            polPoints.append(Point2D(self.pos[0] + (math.floor(i/2)-0.5)*self.side, self.pos[1] + (i%2 - 0.5)*self.side))
+                
+        t = tuple(polPoints)
         
-        if(distance12 > 1):
-            deltaT = 1/distance12
-        else:
-            deltaT = 1
+        obs = Polygon(*t)
         
-        while(foundIntersection == False and t<=1):
-            currentPosition = np.array(pos1) + t*np.array(pos2)
-            if(self.pointIntersection(Agent(currentPosition, np.zeros(len(currentPosition)))) == True):
-                foundIntersection = True
-            t += deltaT
+        if(line.intersect(obs) is not EmptySet()):
+            return True
         
-        return foundIntersection
+        return False
             
     def represent(self):
         posVector = None

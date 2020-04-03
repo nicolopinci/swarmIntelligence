@@ -22,7 +22,7 @@ class Obstacle:
         self.side = side
         
     def pointIntersection(self, agent):
-        if(agent.distance(self.pos) <= 0.5 + self.side*1.414):
+        if(agent.distance(self.pos) <= 0.5 + self.side*1.414/2):
             return True
         else:
             return False
